@@ -54,12 +54,8 @@ describe.only('Config', function() {
     });
 
     function givenConfigFromArgs(argv) {
-      var tempArgv = process.argv,
-          config;
-      process.argv = ['node', 'inspector.js'].concat(argv);
-      config = new Config();
-      process.argv = tempArgv;
-      return config;
+      argv = ['node', 'inspector.js'].concat(argv);
+      return new Config(argv);
     }
   });
 
