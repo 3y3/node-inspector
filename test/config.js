@@ -1,9 +1,9 @@
 var util = require('util'),
     expect = require('chai').expect;
 
-var CONFIGJS_PATH = require.resolve('../lib/config');
+var Config = require('../lib/config');
 
-describe('Config', function() {
+describe.only('Config', function() {
   describe('from argv', function(){
 
     it('handles --help', function() {
@@ -43,6 +43,7 @@ describe('Config', function() {
 
     it('handles --hidden', function() {
       var config = givenConfigFromArgs('--hidden=["abc"]');
+      console.log(config);
       expect(config.hidden).to.satisfy(util.isArray);
       expect(config.hidden.length).to.equal(1);
       expect(config.hidden[0]).to.satisfy(util.isRegExp);
@@ -57,23 +58,20 @@ describe('Config', function() {
       var tempArgv = process.argv,
           config;
       process.argv = ['node', 'inspector.js'].concat(argv);
-      delete require.cache[CONFIGJS_PATH];
-      config = require(CONFIGJS_PATH);
-      delete require.cache[CONFIGJS_PATH];
+      config = new Config();
       process.argv = tempArgv;
       return config;
     }
   });
 
   describe('defaults', function(){
-    var config = require(CONFIGJS_PATH)._collectDefaults();
-    delete require.cache[CONFIGJS_PATH];
+    var config = Config._collectDefaults();
 
     it('have expected values', function(){
       expect(config.help, 'default help value').to.equal(false);
       expect(config.version, 'default version value').to.equal(false);
       expect(config.webPort, 'default web-port value').to.equal(8080);
-      expect(config.webHost, 'default web-host value').to.equal(null);
+      expect(config.webHost, 'default web-host value').to.equal('');
       expect(config.debugPort, 'default debug-port value').to.equal(5858);
       expect(config.saveLiveEdit, 'default save-live-edit value').to.equal(false);
       expect(config.preload, 'default preload value').to.equal(true);
