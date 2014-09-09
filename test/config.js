@@ -43,7 +43,6 @@ describe.only('Config', function() {
 
     it('handles --hidden', function() {
       var config = givenConfigFromArgs('--hidden=["abc"]');
-      console.log(config);
       expect(config.hidden).to.satisfy(util.isArray);
       expect(config.hidden.length).to.equal(1);
       expect(config.hidden[0]).to.satisfy(util.isRegExp);
