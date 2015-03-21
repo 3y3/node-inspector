@@ -1,0 +1,8 @@
+{
+    "dependencies": [
+    	"host"
+    ],
+    "scripts": [
+        "HostOverrides.js"
+    ]
+}

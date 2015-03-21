@@ -1,6 +1,9 @@
 [
     { "name": "node", "type": "autostart" },
+    { "name": "node/host", "type": "autostart" },
     { "name": "node/main", "type": "autostart" },
+    { "name": "node/sdk", "type": "autostart" },
+    { "name": "node/components", "type": "autostart" },
     { "name": "node/settings", "type": "autostart" },
     { "name": "node/sources", "type": "autostart" },
     { "name": "node/console", "type": "autostart" },
