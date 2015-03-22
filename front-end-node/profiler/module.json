@@ -1,0 +1,9 @@
+{
+    "dependencies": [
+        "profiler"
+    ],
+    "scripts": [
+        "SaveOverrides.js",
+        "FileSaver.js"
+    ]
+}
