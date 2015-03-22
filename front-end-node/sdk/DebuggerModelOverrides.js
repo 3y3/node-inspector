@@ -5,13 +5,13 @@ WebInspector.DebuggerModel.prototype.scriptsForSourceURL = function(sourceURL)
     {
         if (!sourceURL)
             return [];
-        return this._scriptsBySourceURL.get(sourceURL) || this._scriptsBySourceURL.get('file://'+sourceURL) || [];
+        return this._scriptsBySourceURL.get('file://'+sourceURL) || this._scriptsBySourceURL.get(sourceURL) || [];
     };
     
     WebInspector.DebuggerModel.prototype.createRawLocationByURL = function(sourceURL, lineNumber, columnNumber)
     {
         var closestScript = null;
-        var scripts = this._scriptsBySourceURL.get(sourceURL) || this._scriptsBySourceURL.get('file://'+sourceURL) || [];
+        var scripts = this._scriptsBySourceURL.get('file://'+sourceURL) || this._scriptsBySourceURL.get(sourceURL) || [];
         for (var i = 0, l = scripts.length; i < l; ++i) {
             var script = scripts[i];
             if (!closestScript)
