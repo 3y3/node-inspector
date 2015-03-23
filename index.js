@@ -16,7 +16,7 @@ function buildInspectorUrl(inspectorHost, inspectorPort, debugPort, fileToShow, 
     hostname: host,
     port: inspectorPort,
     pathname: '/debug',
-    search: '?ws=' + host + ':' + inspectorPort + '&port=' + debugPort
+    search: '?ws=' + host + ':' + inspectorPort + '/' + debugPort
   };
 
   return url.format(parts);
