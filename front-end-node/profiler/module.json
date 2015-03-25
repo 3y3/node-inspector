@@ -3,7 +3,6 @@
         "profiler"
     ],
     "scripts": [
-        "SaveOverrides.js",
-        "FileSaver.js"
+        "SaveOverrides.js"
     ]
 }
