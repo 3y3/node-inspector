@@ -6,7 +6,6 @@ drawer_proto.oldWasShown = drawer_proto.wasShown;
 drawer_proto.wasShown = function()
 {
     WebInspector.inspectorView.registerRequiredCSS('node/components/ComponentsOverrides.css');
-undefined
     drawer_proto.wasShown = drawer_proto.oldWasShown;
     drawer_proto.oldWasShown.call(this);
 }
