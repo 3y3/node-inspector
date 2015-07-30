@@ -3,7 +3,7 @@
         {
             "type": "@WebInspector.ActionDelegate",
             "actionId": "settings.show",
-            "className": "WebInspector.SettingsController.SettingsScreenActionDelegate",
+            "className": "WebInspector.SettingsController.ActionDelegate",
             "bindings": [
                 {
                     "shortcut": "F1 Shift+?"
@@ -11,18 +11,34 @@
             ]
         },
         {
-            "type": "@WebInspector.StatusBarItem.Provider",
-            "actionId": "settings.show",
-            "location": "toolbar-right",
-            "title": "Settings",
-            "order": 3,
-            "elementClass": "settings-status-bar-item"
+            "type": "@WebInspector.ActionDelegate",
+            "actionId": "help.show",
+            "className": "WebInspector.SettingsController.ActionDelegate"
         },
         {
-            "type": "ui-setting",
-            "section": "Sources",
-            "settingType": "custom",
-            "className": "WebInspector.SettingsScreen.SkipStackFramePatternSettingDelegate"
+            "type": "@WebInspector.ToolbarItem.Provider",
+            "actionId": "settings.show",
+            "location": "main-toolbar-right",
+            "title": "Settings",
+            "order": 4,
+            "elementClass": "settings-toolbar-item"
+        },
+        {
+            "type": "@WebInspector.SettingUI",
+            "category": "Sources",
+            "className": "WebInspector.SettingsScreen.SkipStackFramePatternSettingUI"
+        },
+        {
+            "type": "context-menu-item",
+            "location": "mainMenu/footer",
+            "title": "Settings",
+            "actionId": "settings.show"
+        },
+        {
+            "type": "context-menu-item",
+            "location": "mainMenu/footer",
+            "title": "Help",
+            "actionId": "help.show"
         }
     ],
     "dependencies": [

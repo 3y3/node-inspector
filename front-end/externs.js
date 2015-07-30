@@ -39,6 +39,9 @@ Object.observe = function(object, callback) {}
 /** @type {boolean} */
 Event.prototype.isMetaOrCtrlForTest;
 
+/** @type {string} */
+Event.prototype.code;
+
 /**
  * @type {number}
  */
@@ -179,6 +182,11 @@ function DOMFileSystem() {}
  */
 DOMFileSystem.prototype.root = null;
 
+/**
+ * @type {*}
+ */
+window.domAutomationController;
+
 var DevToolsHost = {};
 
 /** @typedef {{type:string, id:(number|undefined),
@@ -290,7 +298,6 @@ function ExtensionDescriptor() {
 function ExtensionReloadOptions() {
     this.ignoreCache = false;
     this.injectedScript = "";
-    this.preprocessingScript = "";
     this.userAgent = "";
 }
 
@@ -306,6 +313,28 @@ difflib.stringAsLines = function(text) { return []; }
 /** @constructor */
 difflib.SequenceMatcher = function(baseText, newText) { }
 difflib.SequenceMatcher.prototype.get_opcodes = function() { return []; }
+
+/** @constructor */
+function Path2D() {}
+Path2D.prototype = {
+    /**
+     * @param {number} x
+     * @param {number} y
+     * @param {number} w
+     * @param {number} h
+     */
+    rect: function(x, y, w, h) { },
+    /**
+     * @param {number} x
+     * @param {number} y
+     */
+    moveTo: function(x, y) { },
+    /**
+     * @param {number} x
+     * @param {number} y
+     */
+    lineTo: function(x, y) { }
+}
 
 /** @constructor */
 var Doc = function() { }
@@ -370,10 +399,13 @@ CodeMirror.prototype = {
     getInputField: function(){ },
     getLine: function(line) { },
     /**
-     * @return {!{wrapClass: string}}
+     * @return {!{wrapClass: string, height: number}}
      */
     getLineHandle: function(line) { },
     getLineNumber: function(line) { },
+    /**
+     * @return {!{token: function(CodeMirror.StringStream, Object):string}}
+     */
     getMode: function() { },
     getOption: function(option) { },
     /** @param {*=} lineSep */
@@ -470,6 +502,12 @@ CodeMirror.overlayMode = function(mode1, mode2, squashSpans) { };
 CodeMirror.defineMode = function(modeName, modeConstructor) { };
 CodeMirror.startState = function(mode) { };
 
+/** @typedef {{canceled: boolean, from: !CodeMirror.Pos, to: !CodeMirror.Pos, text: string, origin: string, cancel: function()}} */
+CodeMirror.BeforeChangeObject;
+
+/** @typedef {{from: !CodeMirror.Pos, to: !CodeMirror.Pos, origin: string, text: !Array.<string>, removed: !Array.<string>}} */
+CodeMirror.ChangeObject;
+
 /** @constructor */
 CodeMirror.Pos = function(line, ch) { }
 /** @type {number} */
@@ -491,25 +529,25 @@ CodeMirror.StringStream = function(line)
     this.start = 0;
 }
 CodeMirror.StringStream.prototype = {
-    backUp: function (n) { },
-    column: function () { },
-    current: function () { },
-    eat: function (match) { },
-    eatSpace: function () { },
-    eatWhile: function (match) { },
-    eol: function () { },
-    indentation: function () { },
+    backUp: function(n) { },
+    column: function() { },
+    current: function() { },
+    eat: function(match) { },
+    eatSpace: function() { },
+    eatWhile: function(match) { },
+    eol: function() { },
+    indentation: function() { },
     /**
      * @param {!RegExp|string} pattern
      * @param {boolean=} consume
      * @param {boolean=} caseInsensitive
      */
-    match: function (pattern, consume, caseInsensitive) { },
-    next: function () { },
-    peek: function () { },
-    skipTo: function (ch) { },
-    skipToEnd: function () { },
-    sol: function () { }
+    match: function(pattern, consume, caseInsensitive) { },
+    next: function() { },
+    peek: function() { },
+    skipTo: function(ch) { },
+    skipToEnd: function() { },
+    sol: function() { }
 }
 
 /** @type {Object.<string, !Object.<string, string>>} */
@@ -521,133 +559,123 @@ CodeMirror.doc;
 /** @type {boolean} */
 window.dispatchStandaloneTestRunnerMessages;
 
-// FIXME: Remove once ES6 is supported natively by JS compiler.
-
-/** @typedef {string} */
-var symbol;
+// FIXME: This should be removed once transpilation is not required for closure compiler ES6
+/**
+ * @param {number} count
+ * @return {string}
+ */
+String.prototype.repeat = function(count) {}
 
 /**
- * @param {string} description
- * @return {symbol}
+ * @param {string} other
+ * @return {boolean}
  */
-function Symbol(description) {}
+String.prototype.includes = function(other) {}
 
 /**
- * @interface
- * @extends $jscomp.Iterable.<T>
- * @template T
+ * @param {*} obj
+ * @return {boolean}
  */
-var Iterator = function() { }
+ArrayBuffer.isView = function(obj) { }
 
-Iterator.prototype = {
-    /**
-     * @return {{done: boolean, value: (T|undefined)}}
-     */
-    next: function() { },
-
-    // FIXME: This should be removed once transpilation is not required for closure compiler ES6
-    $$iterator: function() { }
-}
-
-// FIXME: $jscomp.Iterable hack below should be removed once transpilation is not required for closure compiler ES6
 /**
- * @constructor
- * @implements $jscomp.Iterable.<!Array.<K|V>>
- * @param {!Array.<!Array.<K|V>>|!Iterator.<!Array.<K|V>>=} iterable
- * @template K, V
+ * @param {Array.<Object>} keyframes
+ * @param {number|Object} timing
+ * @return {Object}
  */
-var Map = function(iterable) { }
+Element.prototype.animate = function(keyframes, timing) { }
 
-Map.prototype = {
+var acorn = {
     /**
-     * @param {K} key
-     * @param {V} value
+     * @param {string} text
+     * @param {Object.<string, boolean>} options
+     * @return {!ESTree.Node}
      */
-    set: function(key, value) { },
-
-    /**
-     * @param {K} key
-     * @return {boolean}
-     */
-    delete: function(key) { },
+    parse: function(text, options) {},
 
     /**
-     * @return {!Iterator.<K>}
+     * @param {string} text
+     * @param {Object.<string, boolean>} options
+     * @return {!Acorn.Tokenizer}
      */
-    keys: function() { },
+    tokenizer: function(text, options) {},
 
-    /**
-     * @return {!Iterator.<V>}
-     */
-    values: function() { },
+    tokTypes: {
+        _true: new Acorn.TokenType(),
+        _false: new Acorn.TokenType(),
+        num: new Acorn.TokenType(),
+        regexp: new Acorn.TokenType(),
+        string: new Acorn.TokenType(),
+        name: new Acorn.TokenType(),
+        eof: new Acorn.TokenType()
+    }
+};
 
-    /**
-     * @return {!Array.<!Array.<K|V>>}
-     */
-    entries: function() { },
-
-    /**
-     * @param {K} key
-     * @return {V}
-     */
-    get: function(key) { },
-
-    /**
-     * @param {K} key
-     * @return {boolean}
-     */
-    has: function(key) { },
-
-    clear: function() { },
-
-    /**
-     * @return {number}
-     */
-    get size() { },
-
-    // FIXME: This should be removed once transpilation is not required for closure compiler ES6
-    $$iterator: function() { }
-}
-
-// FIXME: $jscomp.Iterable hack below should be removed once transpilation is not required for closure compiler ES6
+var Acorn = {};
 /**
  * @constructor
- * @implements $jscomp.Iterable.<V>
- * @param {!Array.<V>|!Iterator.<V>=} iterable
- * @template V
  */
-var Set = function(iterable) { }
+Acorn.Tokenizer = function() {
+    /** @type {function():!Acorn.Token} */
+    this.getToken;
+}
 
-Set.prototype = {
-    /**
-     * @param {V} value
-     */
-    add: function(value) { },
+/**
+ * @constructor
+ */
+Acorn.TokenType = function() {
+    /** @type {string} */
+    this.label;
+    /** @type {(string|undefined)} */
+    this.keyword;
+}
 
-    /**
-     * @param {V} value
-     * @return {boolean}
-     */
-    delete: function(value) { },
+/**
+ * @typedef {{type: !Acorn.TokenType, value: string, start: number, end: number}}
+ */
+Acorn.Token;
 
-    /**
-     * @return {!Iterator.<V>}
-     */
-    values: function() { },
+/**
+ * @typedef {{type: string, value: string, start: number, end: number}}
+ */
+Acorn.Comment;
 
-    /**
-     * @param {V} value
-     * @return {boolean}
-     */
-    has: function(value) { },
+/**
+ * @typedef {(!Acorn.Token|!Acorn.Comment)}
+ */
+Acorn.TokenOrComment;
 
-    clear: function() { },
+var ESTree = {};
 
-    /**
-     * @return {number}
-     */
-    get size() { },
+/**
+ * @constructor
+ */
+ESTree.Node = function()
+{
+    /** @type {number} */
+    this.start;
+    /** @type {number} */
+    this.end;
+    /** @type {string} */
+    this.type;
+    /** @type {(!ESTree.Node|undefined)} */
+    this.body;
+    /** @type {(!Array.<!ESTree.Node>|undefined)} */
+    this.declarations;
+    /** @type {(!Array.<!ESTree.Node>|undefined)} */
+    this.properties;
+    /** @type {(!ESTree.Node|undefined)} */
+    this.init;
+}
 
-    // FIXME: This should be removed once transpilation is not required for closure compiler ES6
-    $$iterator: function() { }
+/**
+ * @extends {ESTree.Node}
+ * @constructor
+ */
+ESTree.TemplateLiteralNode = function()
+{
+    /** @type {!Array.<!ESTree.Node>} */
+    this.quasis;
+    /** @type {!Array.<!ESTree.Node>} */
+    this.expressions;
 }

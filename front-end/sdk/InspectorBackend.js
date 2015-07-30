@@ -43,6 +43,15 @@ function InspectorBackendClass()
 
 InspectorBackendClass._DevToolsErrorCode = -32000;
 
+/**
+ * @param {string} error
+ * @param {!Object} messageObject
+ */
+InspectorBackendClass.reportProtocolError = function(error, messageObject)
+{
+    console.error(error + ": " + JSON.stringify(messageObject));
+}
+
 InspectorBackendClass.prototype = {
 
     _initProtocolAgentsConstructor: function()
@@ -245,7 +254,7 @@ InspectorBackendClass._generateCommands = function(schema) {
     }
     function generateEnum(enumName, items)
     {
-        var members = []
+        var members = [];
         for (var m = 0; m < items.length; ++m) {
             var value = items[m];
             var name = value.replace(/-(\w)/g, toUpperCase.bind(null, 1)).toTitleCase();
@@ -352,7 +361,7 @@ InspectorBackendClass.Connection.prototype = {
         }
 
         for (var domain in dispatcherPrototypes)
-            this._dispatchers[domain] = Object.create(dispatcherPrototypes[domain])
+            this._dispatchers[domain] = Object.create(dispatcherPrototypes[domain]);
 
     },
 
@@ -362,7 +371,7 @@ InspectorBackendClass.Connection.prototype = {
     registerAgentsOn: function(object)
     {
         for (var domain in this._agents)
-            object[domain + "Agent"]  = this._agents[domain];
+            object[domain + "Agent"]  = {};
     },
 
     /**
@@ -450,14 +459,6 @@ InspectorBackendClass.Connection.prototype = {
     },
 
     /**
-     * @param {!Object} messageObject
-     */
-    reportProtocolError: function(messageObject)
-    {
-        console.error("Protocol Error: the message with wrong id. Message =  " + JSON.stringify(messageObject));
-    },
-
-    /**
      * @param {!Object|string} message
      */
     dispatch: function(message)
@@ -468,10 +469,9 @@ InspectorBackendClass.Connection.prototype = {
         var messageObject = /** @type {!Object} */ ((typeof message === "string") ? JSON.parse(message) : message);
 
         if ("id" in messageObject) { // just a response for some request
-
             var callback = this._callbacks[messageObject.id];
             if (!callback) {
-                this.reportProtocolError(messageObject);
+                InspectorBackendClass.reportProtocolError("Protocol Error: the message with wrong id", messageObject);
                 return;
             }
 
@@ -490,10 +490,14 @@ InspectorBackendClass.Connection.prototype = {
                 this.runAfterPendingDispatches();
             return;
         } else {
+            if (messageObject.error) {
+                InspectorBackendClass.reportProtocolError("Generic message format error", messageObject);
+                return;
+            }
             var method = messageObject.method.split(".");
             var domainName = method[0];
             if (!(domainName in this._dispatchers)) {
-                console.error("Protocol Error: the message " + messageObject.method + " is for non-existing domain '" + domainName + "'");
+                InspectorBackendClass.reportProtocolError("Protocol Error: the message " + messageObject.method + " is for non-existing domain '" + domainName + "'", messageObject);
                 return;
             }
 
@@ -562,10 +566,10 @@ InspectorBackendClass.Connection.prototype = {
 
     _runPendingCallbacks: function()
     {
-        var keys = Object.keys(this._callbacks).map(function(num) {return parseInt(num, 10)});
+        var keys = Object.keys(this._callbacks).map(function(num) { return parseInt(num, 10); });
         for (var i = 0; i < keys.length; ++i) {
             var callback = this._callbacks[keys[i]];
-            this._dispatchConnectionErrorResponse(callback.domain, callback.methodName, callback)
+            this._dispatchConnectionErrorResponse(callback.domain, callback.methodName, callback);
         }
         this._callbacks = {};
     },
@@ -577,7 +581,7 @@ InspectorBackendClass.Connection.prototype = {
      */
     _dispatchConnectionErrorResponse: function(domain, methodName, callback)
     {
-        var error = { message: "Connection is closed", code:  InspectorBackendClass._DevToolsErrorCode, data: null};
+        var error = { message: "Connection is closed, can't dispatch pending " + methodName, code:  InspectorBackendClass._DevToolsErrorCode, data: null};
         var messageObject = {error: error};
         setTimeout(InspectorBackendClass.AgentPrototype.prototype.dispatchResponse.bind(this.agent(domain), messageObject, methodName, callback), 0);
     },
@@ -614,8 +618,8 @@ InspectorBackendClass.MainConnection = function()
 }
 
 InspectorBackendClass.MainConnection.prototype = {
-
     /**
+     * @override
      * @param {!Object} messageObject
      */
     sendMessage: function(messageObject)
@@ -686,7 +690,7 @@ InspectorBackendClass.WebSocketConnection.prototype = {
      */
     _onMessage: function(message)
     {
-        var data = /** @type {string} */ (message.data)
+        var data = /** @type {string} */ (message.data);
         this.dispatch(data);
     },
 
@@ -699,6 +703,7 @@ InspectorBackendClass.WebSocketConnection.prototype = {
     },
 
     /**
+     * @override
      * @param {!Object} messageObject
      */
     sendMessage: function(messageObject)
@@ -721,13 +726,12 @@ InspectorBackendClass.StubConnection = function()
 }
 
 InspectorBackendClass.StubConnection.prototype = {
-
     /**
+     * @override
      * @param {!Object} messageObject
      */
     sendMessage: function(messageObject)
     {
-        var message = JSON.stringify(messageObject);
         setTimeout(this._echoResponse.bind(this, messageObject), 0);
     },
 
@@ -736,7 +740,7 @@ InspectorBackendClass.StubConnection.prototype = {
      */
     _echoResponse: function(messageObject)
     {
-        this.dispatch(messageObject)
+        this.dispatch(messageObject);
     },
 
     __proto__: InspectorBackendClass.Connection.prototype
@@ -756,11 +760,12 @@ InspectorBackendClass.AgentPrototype = function(domain)
 }
 
 InspectorBackendClass.AgentPrototype.PromisifiedDomains = {
+    "CSS": true,
+    "Emulation": true,
     "Profiler": true
 }
 
 InspectorBackendClass.AgentPrototype.prototype = {
-
     /**
      * @param {!InspectorBackendClass.Connection} connection
      */
@@ -909,9 +914,10 @@ InspectorBackendClass.AgentPrototype.prototype = {
             console.error(message)
             errorMessage = message;
         }
+        var userCallback = (args.length && typeof args.peekLast() === "function") ? args.pop() : null;
         var params = this._prepareParameters(method, signature, args, false, onError);
         if (errorMessage)
-            return Promise.rejectWithError(errorMessage);
+            return Promise.reject(new Error(errorMessage));
         else
             return new Promise(promiseAction.bind(this));
 
@@ -923,15 +929,12 @@ InspectorBackendClass.AgentPrototype.prototype = {
         function promiseAction(resolve, reject)
         {
             /**
-             * @param {?Protocol.Error} error
-             * @param {?Object} result
+             * @param {...*} vararg
              */
-            function callback(error, result)
+            function callback(vararg)
             {
-                if (error)
-                    reject(new Error(error));
-                else
-                    resolve(replyArgs.length ? result : undefined);
+                var result = userCallback ? userCallback.apply(null, arguments) : undefined;
+                resolve(result);
             }
             this._connection._wrapCallbackAndSendMessageObject(this._domain, method, params, callback);
         }
@@ -954,12 +957,9 @@ InspectorBackendClass.AgentPrototype.prototype = {
      */
     dispatchResponse: function(messageObject, methodName, callback)
     {
-        if (messageObject.error && messageObject.error.code !== InspectorBackendClass._DevToolsErrorCode && !InspectorBackendClass.Options.suppressRequestErrors && !this._suppressErrorLogging)
-            console.error("Request with id = " + messageObject.id + " failed. " + JSON.stringify(messageObject.error));
-
-        if (this._promisified) {
-            callback(messageObject.error && messageObject.error.message, messageObject.result);
-            return;
+        if (messageObject.error && messageObject.error.code !== InspectorBackendClass._DevToolsErrorCode && !InspectorBackendClass.Options.suppressRequestErrors && !this._suppressErrorLogging) {
+            var id = InspectorFrontendHost.isUnderTest() ? "##" : messageObject.id;
+            console.error("Request with id = " + id + " failed. " + JSON.stringify(messageObject.error));
         }
 
         var argumentsArray = [];
@@ -1000,7 +1000,7 @@ InspectorBackendClass.DispatcherPrototype.prototype = {
      */
     registerEvent: function(eventName, params)
     {
-        this._eventArgs[eventName] = params
+        this._eventArgs[eventName] = params;
     },
 
     /**
@@ -1021,12 +1021,12 @@ InspectorBackendClass.DispatcherPrototype.prototype = {
             return;
 
         if (!(functionName in this._dispatcher)) {
-            console.error("Protocol Error: Attempted to dispatch an unimplemented method '" + messageObject.method + "'");
+            InspectorBackendClass.reportProtocolError("Protocol Error: Attempted to dispatch an unimplemented method '" + messageObject.method + "'", messageObject);
             return;
         }
 
         if (!this._eventArgs[messageObject.method]) {
-            console.error("Protocol Error: Attempted to dispatch an unspecified method '" + messageObject.method + "'");
+            InspectorBackendClass.reportProtocolError("Protocol Error: Attempted to dispatch an unspecified method '" + messageObject.method + "'", messageObject);
             return;
         }
 
@@ -1046,7 +1046,6 @@ InspectorBackendClass.DispatcherPrototype.prototype = {
         if (InspectorBackendClass.Options.dumpInspectorTimeStats)
             console.log("time-stats: " + messageObject.method + " = " + (Date.now() - processingStartTime));
     }
-
 }
 
 InspectorBackendClass.Options = {
