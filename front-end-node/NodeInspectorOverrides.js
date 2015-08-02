@@ -9,8 +9,6 @@ WebInspector.NodeInspectorOverrides = function() {
   this._overrideUIStrings();
   this._overrideWebSocketCreate();
 
-  this._setWorkerTitle();
-
   this._mergeConnectionQueryParams();
 
   this._openMainScriptOnStartup();
@@ -43,6 +41,7 @@ WebInspector.NodeInspectorOverrides.prototype = {
       args[0] = overridenStrings[string] || string;
       return this.orig_UIString.apply(this, args);
     };
+    WebInspector.UIString.__proto__ = WebInspector.orig_UIString;
   },
 
   _overrideWebSocketCreate: function() {
@@ -56,17 +55,6 @@ WebInspector.NodeInspectorOverrides.prototype = {
       var protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       args[0] = url.replace(/^ws:/, protocol);
       this.origCreate.apply(this, args);
-    };
-  },
-
-  _setWorkerTitle: function() {
-    // Front-end uses `eval location.href` to get url of inspected page
-    // This does not work in node.js from obvious reasons, and cause
-    // a 'null' message to be printed in front-end console.
-    // Since Preferences.applicationTitle does not include inspected url,
-    // we can return arbitrary string as inspected URL.
-    WebInspector.WorkerTargetManager.prototype._calculateWorkerInspectorTitle = function() {
-      InspectorFrontendHost.inspectedURLChanged('');
     };
   },
 
@@ -156,17 +144,17 @@ WebInspector.NodeInspectorOverrides.prototype = {
       var columnNumber = currentFrame._location.columnNumber;
       var scriptId = currentFrame._location.scriptId;
       var sourceURL = currentFrame._script.sourceURL;
-      var sourceMapForId = currentFrame._target._sourceMapForScriptId;
+      var mappedLocation = WebInspector.debuggerWorkspaceBinding.uiLocationToRawLocation(
+                                currentFrame._target, scriptId, lineNumber, columnNumber);
 
-      if (sourceMapForId[scriptId] != null) {
-        var sourceMapEntry = sourceMapForId[scriptId].findEntry(lineNumber, columnNumber);
-        sourceURL = sourceMapEntry[2];
-        lineNumber = sourceMapEntry[3];
-        columnNumber = sourceMapEntry[4];
+      if (mappedLocation) {
+        sourceURL = mappedLocation.scriptId;
+        lineNumber = mappedLocation.lineNumber;
+        columnNumber = mappedLocation.columnNumber;
       }
 
       if (sourceURL) {
-        sourceURL = sourceURL.substr(sourceURL.lastIndexOf('/')+1);
+        sourceURL = sourceURL.substr(sourceURL.lastIndexOf('/') + 1);
       }
 
       message.frameInfo = ' in module ' +

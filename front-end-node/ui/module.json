@@ -1,11 +1,11 @@
 {
     "dependencies": [
-        "network"
+        "ui"
     ],
     "scripts": [
-        "NetworkPanel.js"
+        "Toolbar.js"
     ],
     "resources": [
-        "NetworkPanel.css"
+        "Toolbar.css"
     ]
 }

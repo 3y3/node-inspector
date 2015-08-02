@@ -1,6 +1,6 @@
 {
     "dependencies": [
-        "sources"
+        "main"
     ],
     "scripts": [
         "SourcesOverrides.js"
